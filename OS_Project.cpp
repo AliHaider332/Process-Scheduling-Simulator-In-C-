@@ -56,7 +56,6 @@ public:
 
         cout << "\tEnter the Priority of the Process: ";
         cin >> Priority;
-
         while (true)
         {
             bool isDuplicate = false;
@@ -115,28 +114,32 @@ public:
 vector<int> PCB::Check_Process_ID;
 vector<float> PCB::Check_Process_Priority;
 int PCB::check = 0;
-void PRIORITY(PCB*& First)
+// Create the First Come First Serve algorithm
+void FCFS(PCB*& First)
 {
     PCB* temp = new PCB();
 
-    if (First == nullptr || temp->Priority > First->Priority)
+    if (First == nullptr)
     {
-        temp->next = First;
         First = temp;
     }
     else
     {
-        PCB* Pre = nullptr;
-        PCB* Post = First;
-        while (Post != nullptr && temp->Priority < Post->Priority)
+        PCB* current = First;
+        while (current->next != nullptr)
         {
-            Pre = Post;
-            Post = Post->next;
+            current = current->next;
         }
-        Pre->next = temp;
-        temp->next = Post;
+        current->next = temp;
     }
 }
+
+
+
+
+
+
+//Create the Short Job First Algorithm
 void Short_Job_First(PCB*& First)
 {
     PCB* temp = new PCB();
@@ -161,24 +164,109 @@ void Short_Job_First(PCB*& First)
     }
 }
 
-void FCFS(PCB*& First)
+
+
+
+
+
+
+
+
+// Create  The Priority Algorithm
+void PRIORITY(PCB*& First)
 {
     PCB* temp = new PCB();
 
-    if (First == nullptr)
+    if (First == nullptr || temp->Priority > First->Priority)
     {
+        temp->next = First;
         First = temp;
     }
     else
     {
-        PCB* current = First;
-        while (current->next != nullptr)
+        PCB* Pre = nullptr;
+        PCB* Post = First;
+        while (Post != nullptr && temp->Priority < Post->Priority)
         {
-            current = current->next;
+            Pre = Post;
+            Post = Post->next;
         }
-        current->next = temp;
+        Pre->next = temp;
+        temp->next = Post;
     }
 }
+
+
+
+
+
+
+// Create the Round Robin Algorithm
+void ROUND_ROBIN(queue<PCB*>&HOLDING_QUEUE)
+{
+       PCB* temp = new PCB();
+       HOLDING_QUEUE.push(temp);
+
+}
+void ROUND_ROBIN_IMPLIMENT(queue<PCB*>&HOLDING_QUEUE,int&quantum)
+{
+    if(HOLDING_QUEUE.empty())
+    {
+        cout<<"\n\tNo Process is Present in the RAM:"<<endl;
+        return;
+    }
+    queue<PCB*>QUEUE;
+    while(!HOLDING_QUEUE.empty())
+    {
+        PCB* temp=HOLDING_QUEUE.front();
+        HOLDING_QUEUE.pop();
+        temp->Program_Count-=quantum*10;
+        QUEUE.push(temp);
+    }
+    while(!QUEUE.empty())
+    {
+        PCB* temp=QUEUE.front();
+        QUEUE.pop();
+        if(temp->Program_Count>0)
+        {
+            HOLDING_QUEUE.push(temp);
+        }
+
+    }
+    queue<PCB*>queue1;
+    if (!HOLDING_QUEUE.empty())
+    {
+        HOLDING_QUEUE.front()->Process_State = "Running State";
+        HOLDING_QUEUE.front()->display();// Display the first process in the queue
+        queue1.push(HOLDING_QUEUE.front());
+        HOLDING_QUEUE.pop(); // Remove the front process from the queue
+    }
+
+    int x = 2;  // To manage the display of the process states
+    while (!HOLDING_QUEUE.empty())
+    {
+        if (x)
+        {
+            HOLDING_QUEUE.front()->Process_State = "Ready State";
+            x--; // First two processes are in "Ready State"
+        }
+        HOLDING_QUEUE.front()->display();
+        queue1.push(HOLDING_QUEUE.front());
+        HOLDING_QUEUE.pop();
+    }
+    while(!queue1.empty())
+    {
+        HOLDING_QUEUE.push(queue1.front());
+        queue1.pop();
+    }
+
+}
+
+
+
+
+
+
 void Display_All(PCB* First,bool x)
 {
     PCB* temp = First;
@@ -211,7 +299,6 @@ void Display_All(PCB* First,bool x)
         }
     }
 }
-
 void Major_Display(PCB* FIRST)
 {
     string command;
@@ -223,6 +310,13 @@ void Major_Display(PCB* FIRST)
         Display_All(FIRST,0);
     }
 }
+
+
+
+
+
+
+// Create the Special condition Function
 void Special(PCB*&FIRST)
 {
     if(FIRST==nullptr)
@@ -263,16 +357,30 @@ void Intrupt(PCB*&FIRST)
     cout<<"\n\n\n";
     Display_All(FIRST,0);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 int main()
 {
     cout << "\tIf you want to execute the processes in First Come First Serve Algorithm, then Enter 1:\n";
     cout << "\tIf you want to execute the processes in Priority Algorithm, then Enter 2:\n";
     cout << "\tIf you want to execute the processes in Short Job First Algorithm, then Enter 3:\n";
+    cout << "\tIf you want to execute the processes in Round Robin Algorithm, then Enter 4:\n";
     int check;
     cout<<"\t";
     cin>>check;
     cin.ignore();
-    PCB* FIRST = nullptr;
+    PCB* aFIRST = nullptr;
 
     if (check == 1)
     {
@@ -327,6 +435,51 @@ int main()
                 break;
             }
         }
+    }
+    else if (check == 4)
+    {
+        // Get quantum time for Round Robin
+        queue<PCB*>HOLDING_QUEUE;
+        int quantum;
+        cout << "\n\tEnter the time quantum for Round Robin scheduling: ";
+        cin >> quantum;
+        cin.ignore();
+
+        while (true)
+        {
+            string command;
+            cout << "\n\n\tTo Enter the Process type yes/YES: ";
+            getline(cin, command);
+            if (command == "YES" || command == "yes")
+            {
+                ROUND_ROBIN(HOLDING_QUEUE);  // Simply add the all process
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        // Now perform Round Robin scheduling
+        bool flag=true;
+        string chack_point;
+        while(flag)
+        {
+                ROUND_ROBIN_IMPLIMENT(HOLDING_QUEUE, quantum);
+                cout<<"\tFor again output enter YES/yes:"<<endl;
+                cout<<"\t";
+                getline(cin, chack_point);
+                if( chack_point=="YES" ||  chack_point=="yes")
+                {
+                    flag=true;
+                }
+                else
+                {
+                    flag=false;
+                }
+        }
+        return 0;
+
     }
 
     Major_Display(FIRST);
